@@ -1,0 +1,86 @@
+import org.drools.core.process.core.datatype.impl.type.StringDataType;
+import org.drools.core.process.core.datatype.impl.type.ObjectDataType;
+
+[
+  [
+    "name" : "Email",
+    "parameters" : [
+      "From" : new StringDataType(),
+      "To" : new StringDataType(),
+      "Subject" : new StringDataType(),
+      "Body" : new StringDataType()
+    ],
+    "displayName" : "Email",
+    "icon" : "defaultemailicon.gif"
+  ],
+
+  [
+    "name" : "Log",
+    "parameters" : [
+      "Message" : new StringDataType()
+    ],
+    "displayName" : "Log",
+    "icon" : "defaultlogicon.gif"
+  ],
+
+  [
+    "name" : "WebService",
+    "parameters" : [
+        "Url" : new StringDataType(),
+         "Namespace" : new StringDataType(),
+         "Interface" : new StringDataType(),
+         "Operation" : new StringDataType(),
+         "Parameter" : new StringDataType(),
+         "Mode" : new StringDataType()
+    ],
+    "results" : [
+        "Result" : new ObjectDataType(),
+    ],
+    "displayName" : "WS",
+    "icon" : "defaultservicenodeicon.png"
+  ],
+
+  // the LPUserTask work item
+  [
+    "name" : "LPUserTask",
+    "parameters" : [
+      "ActorId" : new StringDataType(),
+      "Comment" : new StringDataType(),
+      "Content" : new StringDataType(),
+      "GroupId" : new StringDataType(),
+      "Priority" : new StringDataType(),
+      "Skippable" : new StringDataType(),
+      "Swimlane" : new StringDataType(),
+      "TaskName" : new StringDataType(),
+      "Actions"  : new StringDataType(),
+      "notify" : new StringDataType(),
+      "To" : new StringDataType(),
+      "From" : new StringDataType(),
+      "Reply-To" : new StringDataType(),
+      "Cc" : new StringDataType(),
+      "Bcc" : new StringDataType(),
+      "Subject" : new StringDataType(),
+      "Body" : new StringDataType()
+    ],
+    "displayName" : "LP User Task",
+    "icon" : "icons/icon-LPUser-Task.png"
+  ],
+  
+  [
+    "name" : "Rest",
+    "parameters" : [
+        "Url" : new StringDataType(),
+        "Method" : new StringDataType(),
+        "ConnectTimeout" : new StringDataType(),
+        "ReadTimeout" : new StringDataType(),
+        "Username" : new StringDataType(),
+        "Password" : new StringDataType()
+    ],
+    "results" : [
+        "Result" : new ObjectDataType(),
+    ],
+    "displayName" : "REST",
+    "icon" : "defaultservicenodeicon.png"
+  ]
+
+]
