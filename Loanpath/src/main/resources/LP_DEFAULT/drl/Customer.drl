@@ -1,0 +1,17 @@
+#created on: Sept 21, 2011
+package LP_DEFAULT
+
+import com.thirdpillar.foundation.service.Context;
+import com.thirdpillar.foundation.service.LookupService;
+import com.thirdpillar.foundation.service.EntityService;
+import com.thirdpillar.codify.loanpath.model.AttributeChoice;
+import com.thirdpillar.codify.loanpath.model.Customer;
+
+rule "setCustomerType"
+	agenda-group "NEW" 
+	when
+		customer:Customer()
+	then
+		AttributeChoice type =(AttributeChoice)LookupService.getResult("AttributeChoice.byKey", "key","CUSTOMER_TYPE_NON_INDIVIDUAL");
+		customer.setCustomerType(type);
+end

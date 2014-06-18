@@ -1,0 +1,90 @@
+#created on: Fabuary 03, 2012
+package LP_DEFAULT
+
+import com.thirdpillar.codify.loanpath.model.AttributeChoice;
+import com.thirdpillar.codify.loanpath.model.Facility;
+import com.thirdpillar.codify.loanpath.model.CoaEvaluation;
+import com.thirdpillar.codify.loanpath.model.CoaDefinition;
+import com.thirdpillar.foundation.service.LookupService;
+import com.thirdpillar.codify.loanpath.model.WorkflowStatus;
+import function com.thirdpillar.foundation.rules.RuleFunctions.logDebug;
+global com.thirdpillar.foundation.service.Context appContext;
+import java.util.ArrayList;
+import java.util.List;
+import java.math.BigDecimal;
+
+
+/*
+	Rule to set default evaluation to Incomplete
+*/
+
+rule "SetStatusToIncomplete"
+		agenda-group "NEW"
+			when
+				#condition
+			coaEval:CoaEvaluation() 
+			then
+			#actions 
+			AttributeChoice coaType=(AttributeChoice)LookupService.getResult("AttributeChoice.byKey", "key","COA_EVALUATION_INCOMPLETE");
+			coaEval.setCoaEvaluation(coaType);
+end
+
+rule "SetCoaEvaluationProduct"
+	agenda-group "NEW"
+	when
+		coaEval:CoaEvaluation()
+	then
+		if (appContext != null && appContext.getNamedContext().get("root_coaFacilities") != null) {
+			coaEval.setProduct((Facility) appContext.getNamedContext().get("root_coaFacilities"));
+		}
+end
+
+rule "SetCoaDefaultPriorToValue_Others"
+	salience 100
+	when
+		changeModelEvent:CoaEvaluation.ChangeModelEvent(property == "coaDefinition")
+	then
+		CoaEvaluation coaEvaluation = (CoaEvaluation)changeModelEvent.getEntity();
+		coaEvaluation.setPriorToValueOriginal(null); 
+		coaEvaluation.setPriorToValue(coaEvaluation.getPriorToValueOriginal());
+end
+
+rule "SetCoaDefaultPriorToValue_AnyDisbursement"
+	when
+		changeModelEvent:CoaEvaluation.ChangeModelEvent(property == "coaDefinition",newValue != null, ((CoaDefinition)newValue).priorTo == "Any disbursement")
+	then
+		CoaEvaluation coaEvaluation = (CoaEvaluation)changeModelEvent.getEntity();
+		coaEvaluation.setPriorToValueOriginal(new BigDecimal(0)); 
+		coaEvaluation.setPriorToValue(coaEvaluation.getPriorToValueOriginal());
+end
+
+rule "SetCoaDefaultPriorToValue_FundingOfLoan"
+	when
+		changeModelEvent:CoaEvaluation.ChangeModelEvent(property == "coaDefinition",newValue != null, ((CoaDefinition)newValue).priorTo == "Funding of Loan")
+	then
+		CoaEvaluation coaEvaluation = (CoaEvaluation)changeModelEvent.getEntity();
+		coaEvaluation.setPriorToValueOriginal(coaEvaluation.getProduct().getApprovedLoanAmt());
+		coaEvaluation.setPriorToValue(coaEvaluation.getPriorToValueOriginal());
+end
+
+rule "SetCoaDefaultPriorToValue_DollarAmt"
+	when
+		changeModelEvent:CoaEvaluation.ChangeModelEvent(property == "coaDefinition",newValue != null, ((CoaDefinition)newValue).priorTo != null && ((CoaDefinition)newValue).priorTo.startsWith("$"))
+	then
+		CoaEvaluation coaEvaluation = (CoaEvaluation)changeModelEvent.getEntity();
+		CoaDefinition coaDefinition = (CoaDefinition)changeModelEvent.getNewValue();
+		String valAsString=coaDefinition.getPriorTo();										
+		valAsString = valAsString.substring(1);
+		valAsString=valAsString.replace(",","");				
+		int val=Integer.parseInt(valAsString);
+		coaEvaluation.setPriorToValueOriginal(new BigDecimal(val)); 
+		coaEvaluation.setPriorToValue(coaEvaluation.getPriorToValueOriginal());
+end
+
+rule "SetCoaEvalCommentRequired"
+	when 
+		changeModelEvent:CoaEvaluation.ChangeModelEvent(property == "priorToValue")
+	then
+		CoaEvaluation coaEvaluation = (CoaEvaluation)changeModelEvent.getEntity();
+		coaEvaluation.setPriorToOverrideMsg(null);
+end

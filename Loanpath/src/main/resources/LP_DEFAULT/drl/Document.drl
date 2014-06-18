@@ -1,0 +1,148 @@
+#created on: Sept 21, 2011
+package LP_DEFAULT
+
+import com.thirdpillar.codify.loanpath.model.Document;
+import com.thirdpillar.codify.loanpath.model.User;
+import com.thirdpillar.codify.loanpath.model.Request;
+import com.thirdpillar.codify.loanpath.model.DocumentGroup;
+import java.util.Date;
+
+global com.thirdpillar.foundation.service.Context appContext;
+global java.lang.String actorId;
+
+
+rule "SetStatusBeforeGenerateOrUpload"
+                agenda-group "NEW" 
+                when
+                        #conditions
+        				document:Document()
+        	    then 
+                        #actions 
+                        document.setRequestLevel(true);
+                                          
+end
+
+
+rule "SetRequestBeforeGenerate"
+                agenda-group "NEW" 
+                when
+                        #conditions
+                        document:Document()
+                        #appContext:Context()
+                        #appContext1:Context(root:rootContextEntity, eval(root instanceof Request))
+                        
+        	    then 
+                        #actions
+                        if(appContext != null && appContext.getRootContextEntity() !=null && (appContext.getRootContextEntity())instanceof Request)
+                        {
+	                        Request req=(Request)appContext.getRootContextEntity();
+	                        document.setAssociatedRequest(req);
+                        } 
+end
+
+rule "SetStatusToNewBeforeGenerate"
+                agenda-group "NEW" 
+                when
+                        #conditions
+        				document:Document()
+        	    then 
+                        #actions 
+                        
+                        com.thirdpillar.codify.loanpath.model.AttributeChoice docStatus=( com.thirdpillar.codify.loanpath.model.AttributeChoice)com.thirdpillar.foundation.service.LookupService.getResult("AttributeChoice.byKey", "key","DOCUMENT_STATUS_NEW");
+   						document.setDocumentStatus(docStatus);
+end
+
+rule "SetStatusToPendingReviewOnSave"
+                agenda-group "SAVE" 
+                when
+                        #conditions
+        				req:Request(documentGroup != null)
+        	    then 
+                        #actions  
+                        if(((DocumentGroup)req.getDocumentGroup()).getUploadedDocuments()!=null && ((DocumentGroup)req.getDocumentGroup()).getUploadedDocuments().size()>0)
+                        { 
+	                       for(Document document:((DocumentGroup)req.getDocumentGroup()).getUploadedDocuments())
+	                       {
+		                        if(document.getDocumentStatus()!=null && document.getDocumentStatus().getKey().equalsIgnoreCase("DOCUMENT_STATUS_NEW"))
+		                        {
+		                           com.thirdpillar.codify.loanpath.model.AttributeChoice docStatus=( com.thirdpillar.codify.loanpath.model.AttributeChoice)com.thirdpillar.foundation.service.LookupService.getResult("AttributeChoice.byKey", "key","DOCUMENT_STATUS_PENDING_REVIEW");
+		   						   document.setDocumentStatus(docStatus);
+		   						}
+	   						}
+	   					}
+end
+
+rule "SetReadOnly_OnWetSignatureTrue"
+                when
+                        #conditions
+        				changeModelEvent:Document.ChangeModelEvent(property == "wetSignature",newValue == true)
+        	    then 
+                        #actions 
+                        Document document = (Document) changeModelEvent.getEntity();
+                       	document.setReadOnly(false);
+end
+
+rule "SetReadOnly_OnWetSignatureFalse"
+                when
+                        #conditions
+        				changeModelEvent:Document.ChangeModelEvent(property == "wetSignature",newValue == false)
+        	    then 
+                        #actions 
+                        Document document = (Document) changeModelEvent.getEntity();
+                        if (document.getEsignatureRqd()) {
+                       		document.setReadOnly(true);
+                       	}
+end
+
+rule "SetOnDocumentTypeChange"
+	salience 100
+                when
+                        #conditions
+        				changeModelEvent:Document.ChangeModelEvent(property == "documentType")
+        	    then 
+                        #actions 
+                        Document document = (Document) changeModelEvent.getEntity();
+                        document.setRequestLevel(true);                        
+                       	document.setReadOnly(false);
+                       	document.setEsignatureRqd(false);
+end
+
+rule "SetOnRequestLevelChange"
+	salience 100
+                when
+                        #conditions
+        				changeModelEvent:Document.ChangeModelEvent(property == "requestLevel",newValue == true)
+        	    then 
+                        #actions 
+                        Document document = (Document) changeModelEvent.getEntity();
+                        document.setAssociatedFacilities(null);                        
+end
+
+rule "SetUploadedByAndDttmOnStreamChange"
+                when
+                        #conditions
+        				changeModelEvent:Document.ChangeModelEvent(property == "uploadedStream")
+        	    then 
+                        #actions 
+                        Document document = (Document) changeModelEvent.getEntity();
+                        document.setUploadDttm(new Date());
+                        if (appContext != null && appContext.getUser() != null && (appContext.getUser() instanceof User)) {
+                        	document.setUploadedStreamBy((User)appContext.getUser());
+                        } else {                        
+                        	document.setUploadedStreamBy(null);
+                        }
+end
+
+rule "SetDocumentVersionOnStreamChange"
+                when
+                        #conditions
+        				changeModelEvent:Document.ChangeModelEvent(property == "uploadedStream", newValue != null)
+        	    then 
+                        #actions 
+                        Document document = (Document) changeModelEvent.getEntity();
+                        if (document.getVersionNumber() != null) {
+                        	document.setVersionNumber(document.getVersionNumber() + 1);
+                        } else {
+                        	document.setVersionNumber(1);
+                        }
+end

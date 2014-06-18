@@ -65,21 +65,21 @@
       <name>Guvnor M2 Repo</name>
       <url>http://localhost:8080/jbpm-console/maven2/</url>
     </repository>
-<!--       <repository> -->
-<!--         <id>internal</id> -->
-<!--         <name>Third Pillar Internal Repository</name> -->
-<!--         <url>http://subversion.thirdpillar.com:8081/artifactory/thirdpillar</url> -->
-<!--         <snapshots> -->
-<!--           <enabled>true</enabled>          -->
-<!--         </snapshots> -->
-<!--       </repository> -->
-<!--       <repository> -->
-<!--         <id>central</id> -->
-<!--         <name>ibiblio</name> -->
-<!--         <url>http://subversion.thirdpillar.com:8081/artifactory/repo1-cache</url> -->
-<!--         <snapshots> -->
-<!--           <enabled>false</enabled> -->
-<!--         </snapshots> -->
-<!--       </repository> -->
+      <repository>
+        <id>internal</id>
+        <name>Third Pillar Internal Repository</name>
+        <url>http://subversion.thirdpillar.com:8081/artifactory/thirdpillar</url>
+        <snapshots>
+          <enabled>true</enabled>         
+        </snapshots>
+      </repository>
+      <repository>
+        <id>central</id>
+        <name>ibiblio</name>
+        <url>http://subversion.thirdpillar.com:8081/artifactory/repo1-cache</url>
+        <snapshots>
+          <enabled>false</enabled>
+        </snapshots>
+      </repository>
   </repositories>
 </project>

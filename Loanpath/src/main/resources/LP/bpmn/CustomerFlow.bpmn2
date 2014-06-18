@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<definitions id="Definition"
+             targetNamespace="http://www.jboss.org/drools"
+             typeLanguage="http://www.java.com/javaTypes"
+             expressionLanguage="http://www.mvel.org/2.0"
+             xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
+             xmlns:g="http://www.jboss.org/drools/flow/gpd"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:tns="http://www.jboss.org/drools">
+
+  <itemDefinition id="_contextEntityItem" structureRef="com.thirdpillar.codify.loanpath.model.Customer" />
+
+  <process processType="Private" isExecutable="true" id="CustomerFlow" name="CustomerFlow" tns:packageName="LP" >
+
+    <extensionElements>
+     <tns:import name="com.thirdpillar.codify.loanpath.model.Customer" />
+    </extensionElements>
+    <!-- process variables -->
+    <property id="contextEntity" itemSubjectRef="_contextEntityItem"/>
+
+    <!-- nodes -->
+    <startEvent id="_34" name="Start" />
+    <scriptTask id="_35" name="Script" scriptFormat="http://www.java.com/java" >
+      <script>
+    </script>
+    </scriptTask>
+    <endEvent id="_33" name="End" >
+        <terminateEventDefinition/>
+    </endEvent>
+    <task id="_42" name="Wait State" tns:taskName="WaitState" >
+      <ioSpecification>
+        <inputSet>
+        </inputSet>
+        <outputSet>
+        </outputSet>
+      </ioSpecification>
+    </task>
+
+    <!-- connections -->
+    <sequenceFlow id="_34-_35" sourceRef="_34" targetRef="_35" />
+    <sequenceFlow id="_42-_33" sourceRef="_42" targetRef="_33" />
+    <sequenceFlow id="_35-_42" sourceRef="_35" targetRef="_42" />
+
+  </process>
+
+  <bpmndi:BPMNDiagram>
+    <bpmndi:BPMNPlane bpmnElement="CustomerFlow" >
+      <bpmndi:BPMNShape bpmnElement="_34" >
+        <dc:Bounds x="42" y="33" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_35" >
+        <dc:Bounds x="26" y="121" width="80" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_33" >
+        <dc:Bounds x="43" y="283" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_42" >
+        <dc:Bounds x="22" y="200" width="88" height="54" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="_34-_35" >
+        <di:waypoint x="66" y="57" />
+        <di:waypoint x="66" y="145" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_42-_33" >
+        <di:waypoint x="66" y="227" />
+        <di:waypoint x="67" y="307" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_35-_42" >
+        <di:waypoint x="66" y="145" />
+        <di:waypoint x="66" y="227" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>

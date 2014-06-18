@@ -1,0 +1,54 @@
+#created on: September 23, 2011
+package LP_DEFAULT
+
+import com.thirdpillar.codify.loanpath.model.Request;
+import com.thirdpillar.codify.loanpath.model.Facility;
+import com.thirdpillar.codify.loanpath.model.CoasetDefinition;
+import com.thirdpillar.foundation.service.LookupService;
+import com.thirdpillar.foundation.service.EntityService;
+import com.thirdpillar.codify.loanpath.model.WorkflowStatus;
+import com.thirdpillar.codify.loanpath.model.AttributeChoice;
+import com.thirdpillar.codify.loanpath.model.UCC;
+import function com.thirdpillar.foundation.rules.RuleFunctions.*;
+
+
+import java.util.ArrayList;
+import java.util.List;
+import java.math.BigDecimal;
+import java.lang.Integer;
+
+rule "SetFacilityWFStatusToNew"
+	agenda-group "NEW" 
+	when
+		#conditions
+        f:Facility()
+	then 
+		#actions
+		WorkflowStatus status=( WorkflowStatus)LookupService.getResult("WorkflowStatus.byStatusKey", "statusKey", "FACILITY_STATUS_NEW");
+		f.setWfStatus(status);
+end
+
+rule "SetFacilityCoasetDefinition"
+	agenda-group "NEW" 
+	when
+		#conditions
+        f:Facility()
+	then 
+		#actions
+		EntityService es = new EntityService();
+		CoasetDefinition coaSetDef = (CoasetDefinition)es.createNew(CoasetDefinition.class);
+		f.setCoasetDefinition(coaSetDef);
+end
+
+rule "FacilityStatus_Save"
+	agenda-group "SAVE" 
+	when
+		req:Request()		 
+		f:Facility(wfStatus == null || wfStatus.statusKey == "FACILITY_STATUS_NEW") from req.allFacilities
+	then
+		WorkflowStatus status=(WorkflowStatus)LookupService.getResult("WorkflowStatus.byStatusKey", "statusKey", "FACILITY_STATUS_PENDING");
+		f.setWfStatus(status);
+end
+
+
+

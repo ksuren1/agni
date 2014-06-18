@@ -1,0 +1,154 @@
+#created on: September 23, 2011
+package LP_DEFAULT
+
+import com.thirdpillar.codify.loanpath.model.Request;
+import com.thirdpillar.codify.loanpath.model.Structure;
+import com.thirdpillar.codify.loanpath.model.Approval;
+import com.thirdpillar.foundation.service.LookupService;
+import com.thirdpillar.foundation.service.EntityService;
+import com.thirdpillar.codify.loanpath.model.WorkflowStatus;
+import com.thirdpillar.codify.loanpath.model.AttributeChoice;
+import com.thirdpillar.codify.loanpath.model.UCC;
+import function com.thirdpillar.foundation.rules.RuleFunctions.*;
+
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Date;
+import java.math.BigDecimal;
+import java.lang.Integer;
+
+
+rule "SetPullNewReportToNo"
+	agenda-group "NEW" 
+	when
+		#conditions
+        req:Request()
+	then 
+		#actions
+		AttributeChoice valueNo=( AttributeChoice) LookupService.getResult("AttributeChoice.byKey", "key","YES_OR_NO_NO");
+		
+		req.setPullNewReport(valueNo);
+end
+
+rule "SetDocumentGroup"
+	agenda-group "NEW" 
+	when
+		#conditions
+        r:Request( documentGroup == ( null ) )
+	then 
+		#actions
+		EntityService es = new EntityService();
+		DocumentGroup documentGroup = (DocumentGroup)es.createNew(DocumentGroup.class);
+		r.setDocumentGroup(documentGroup);
+		logDebug(drools, "setting the document group for Request here");		
+end
+
+rule "SetUCCWFStatusToSave1"
+	agenda-group "SAVE" 
+	when
+		#conditions
+        req:Request()
+	then 
+		#actions
+		for(UCC ucc : req.getUccs()){
+			WorkflowStatus status=(WorkflowStatus)LookupService.getResult("WorkflowStatus.byStatusKey", "statusKey", "UCC_STATUS_SAVED");
+			if ("UCC_STATUS_NEW".equalsIgnoreCase(ucc.getWfStatus().getStatusKey())) {
+					ucc.setWfStatus(status);
+			}
+		}
+			
+end
+
+rule "AddRequestTag_OnWfStatusChange"
+	when
+		changeModelEvent:Request.ChangeModelEvent(property == "wfStatus", newValue != null)
+	then
+		Request request = (Request) changeModelEvent.getEntity();
+		EntityService es = new EntityService();
+		WorkflowStatus wfStatus = (WorkflowStatus) changeModelEvent.getNewValue();
+		es.tag(request,wfStatus.getHelper().getDisplayValue());
+end
+
+rule "AddRequestTag_OnWfStatusToNull"
+	when
+		changeModelEvent:Request.ChangeModelEvent(property == "wfStatus", newValue == null)
+	then
+		Request request = (Request) changeModelEvent.getEntity();
+		EntityService es = new EntityService();
+		es.tag(request,"No Status Set");
+end
+
+rule "RequestStatus_New"
+	agenda-group "NEW" 
+	when
+		req:Request()
+	then
+		WorkflowStatus status=(WorkflowStatus)LookupService.getResult("WorkflowStatus.byStatusKey", "statusKey", "REQUEST_STATUS_NEW");
+		req.setWfStatus(status);
+end
+
+rule "RequestStatus_Save"
+	agenda-group "SAVE" 
+	when
+		req:Request(wfStatus == null || wfStatus.statusKey == "REQUEST_STATUS_NEW")
+	then
+		WorkflowStatus status=(WorkflowStatus)LookupService.getResult("WorkflowStatus.byStatusKey", "statusKey", "REQUEST_STATUS_SAVED");
+		req.setWfStatus(status);
+end
+
+rule "RequestStatus_SetRegBDTTM"
+	agenda-group "SAVE" 
+	when
+		req:Request(id == null, regbDttm == null)
+	then
+		req.setRegbDttm(new Date());
+end
+
+rule "SetApprovalObjectOnRequest"
+	salience 100
+	agenda-group "ApprovalChainSetup"
+    when
+		#conditions
+		req:Request(approval == null)
+	then 
+        #actions 
+		EntityService es = new EntityService();
+		Approval approval = (Approval)es.createNew(Approval.class);
+		req.setApproval(approval);
+		logDebug(drools, "setting the approval object on request");		
+end
+
+rule "SetCustomerRateOnCOFChange"
+	when
+		changeModelEvent:Structure.ChangeModelEvent(property == "cof")
+	then
+		Structure structure = (Structure) changeModelEvent.getEntity();
+		BigDecimal rate = new BigDecimal(0);
+		if (changeModelEvent.getNewValue() != null) {
+			rate = rate.add((BigDecimal)changeModelEvent.getNewValue());
+		}
+		
+		if (structure.getMargin() != null) {
+			rate = rate.add(structure.getMargin());
+		}
+		
+		structure.setCustomerRate(rate);
+end
+
+rule "SetCustomerRateOnMarginChange"
+	when
+		changeModelEvent:Structure.ChangeModelEvent(property == "margin")
+	then
+		Structure structure = (Structure) changeModelEvent.getEntity();
+		BigDecimal rate = new BigDecimal(0);
+		if (changeModelEvent.getNewValue() != null) {
+			rate = rate.add((BigDecimal)changeModelEvent.getNewValue());
+		}
+		
+		if (structure.getCof() != null) {
+			rate = rate.add(structure.getCof());
+		}
+		
+		structure.setCustomerRate(rate);
+end

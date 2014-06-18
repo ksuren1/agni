@@ -1,0 +1,1812 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<definitions id="Definition"
+             targetNamespace="http://www.jboss.org/drools"
+             typeLanguage="http://www.java.com/javaTypes"
+             expressionLanguage="http://www.mvel.org/2.0"
+             xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
+             xmlns:g="http://www.jboss.org/drools/flow/gpd"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:tns="http://www.jboss.org/drools">
+
+  <itemDefinition id="_contextEntityItem" structureRef="com.thirdpillar.codify.loanpath.model.Document" />
+  <itemDefinition id="_teamItem" structureRef="com.thirdpillar.codify.loanpath.model.Team" />
+  <itemDefinition id="_resultItem" structureRef="String" />
+  <itemDefinition id="_signaturesCompletedItem" structureRef="Boolean" />
+  <itemDefinition id="_docListItem" structureRef="java.util.List" />
+  <itemDefinition id="_docInputMapItem" structureRef="java.util.Map" />
+  <itemDefinition id="_esigDocumentListItem" structureRef="java.util.Map" />
+  <itemDefinition id="_entityNameItem" structureRef="String" />
+  <itemDefinition id="_actionItem" structureRef="String" />
+  <itemDefinition id="_entityInItem" />
+  <itemDefinition id="_entityOutItem" />
+  <itemDefinition id="_associatedRequestItem" structureRef="com.thirdpillar.codify.loanpath.model.Request" />
+  <itemDefinition id="_autoApproveDocIndicatorItem" structureRef="Boolean" />
+  <itemDefinition id="_taskOnGenerationFailureItem" structureRef="Boolean" />
+  <itemDefinition id="_generationFailedTaskOwnerItem" structureRef="String" />
+  <itemDefinition id="_generationFailedTaskEmailsItem" structureRef="String" />
+  <itemDefinition id="_generationFailedTaskTeamItem" structureRef="String" />
+
+  <process processType="Private" isExecutable="true" id="DocumentFlow" name="DocumentFlow" tns:packageName="LP" >
+
+    <extensionElements>
+     <tns:import name="com.thirdpillar.codify.loanpath.model.Document" />
+     <tns:import name="com.thirdpillar.codify.loanpath.model.Facility" />
+     <tns:import name="com.thirdpillar.codify.loanpath.model.Request" />
+     <tns:import name="com.thirdpillar.codify.loanpath.model.DocumentSigner" />
+     <tns:import name="com.thirdpillar.codify.loanpath.model.AttributeChoice" />
+     <tns:import name="com.thirdpillar.codify.loanpath.model.Team" />
+     <tns:import name="com.thirdpillar.codify.loanpath.util.PdfUtils" />
+     <tns:import name="com.thirdpillar.foundation.service.*" />
+     <tns:import name="java.util.List" />
+     <tns:import name="java.util.ArrayList" />
+     <tns:import name="java.util.Map" />
+     <tns:import name="java.util.HashMap" />
+    </extensionElements>
+    <!-- process variables -->
+    <property id="contextEntity" itemSubjectRef="_contextEntityItem"/>
+    <property id="team" itemSubjectRef="_teamItem"/>
+    <property id="result" itemSubjectRef="_resultItem"/>
+    <property id="signaturesCompleted" itemSubjectRef="_signaturesCompletedItem"/>
+    <property id="docList" itemSubjectRef="_docListItem"/>
+    <property id="docInputMap" itemSubjectRef="_docInputMapItem"/>
+    <property id="esigDocumentList" itemSubjectRef="_esigDocumentListItem"/>
+    <property id="entityName" itemSubjectRef="_entityNameItem"/>
+    <property id="action" itemSubjectRef="_actionItem"/>
+    <property id="entityIn" itemSubjectRef="_entityInItem"/>
+    <property id="entityOut" itemSubjectRef="_entityOutItem"/>
+    <property id="associatedRequest" itemSubjectRef="_associatedRequestItem"/>
+    <property id="autoApproveDocIndicator" itemSubjectRef="_autoApproveDocIndicatorItem"/>
+    <property id="taskOnGenerationFailure" itemSubjectRef="_taskOnGenerationFailureItem"/>
+    <property id="generationFailedTaskOwner" itemSubjectRef="_generationFailedTaskOwnerItem"/>
+    <property id="generationFailedTaskEmails" itemSubjectRef="_generationFailedTaskEmailsItem"/>
+    <property id="generationFailedTaskTeam" itemSubjectRef="_generationFailedTaskTeamItem"/>
+
+    <!-- nodes -->
+    <endEvent id="_7" name="End" >
+        <terminateEventDefinition/>
+    </endEvent>
+    <startEvent id="_9" name="Start" />
+    <task id="_10" name="Wait State" tns:taskName="WaitState" >
+      <ioSpecification>
+        <inputSet>
+        </inputSet>
+        <outputSet>
+        </outputSet>
+      </ioSpecification>
+    </task>
+    <scriptTask id="_11" name="Script" scriptFormat="http://www.java.com/java" >
+      <script></script>
+    </scriptTask>
+    <intermediateCatchEvent id="_12" name="SubmitDocumentForReview" >
+      <signalEventDefinition signalRef="SubmitDocumentForReview"/>
+    </intermediateCatchEvent>
+    <scriptTask id="_13" name="Status - Pending Review" scriptFormat="http://www.java.com/java" >
+      <script>Document document = (Document) context.getVariable("contextEntity");
+AttributeChoice docStatus=(AttributeChoice) LookupService.getResult("AttributeChoice.byKey", "key","DOCUMENT_STATUS_PENDING_REVIEW");
+document.setDocumentStatus(docStatus);</script>
+    </scriptTask>
+    <intermediateCatchEvent id="_19" name="DocumentSigningCompleted" >
+      <signalEventDefinition signalRef="DocumentSigningCompleted"/>
+    </intermediateCatchEvent>
+    <scriptTask id="_20" name="Status - Signing Completed" scriptFormat="http://www.java.com/java" >
+      <script>com.thirdpillar.codify.loanpath.model.Document document=(com.thirdpillar.codify.loanpath.model.Document)context.getVariable("contextEntity");
+ 
+  com.thirdpillar.codify.loanpath.model.AttributeChoice docStatus=( com.thirdpillar.codify.loanpath.model.AttributeChoice)com.thirdpillar.foundation.service.LookupService.getResult("AttributeChoice.byKey", "key","DOCUMENT_STATUS_SIGNING_COMPLETED");
+  document.setDocumentStatus(docStatus);
+               
+    com.thirdpillar.foundation.service.EntityService&lt;com.thirdpillar.foundation.model.BaseDataObject&gt; entityService = new com.thirdpillar.foundation.service.EntityService&lt;com.thirdpillar.foundation.model.BaseDataObject&gt;();
+    entityService.save((com.thirdpillar.foundation.model.BaseDataObject)document);
+    
+    
+    </script>
+    </scriptTask>
+    <exclusiveGateway id="_23" name="Gateway" gatewayDirection="Diverging" />
+    <task id="_22" name="Document Signing Verification Task" tns:taskName="LPUserTask" >
+      <extensionElements>
+        <tns:onEntry-script scriptFormat="http://www.java.com/java">
+          <script>com.thirdpillar.codify.loanpath.model.Team currentTeam = (com.thirdpillar.codify.loanpath.model.Team) com.thirdpillar.foundation.service.LookupService.getResult("Team.byName","name", "Team Blue"); 
+context.setVariable("team", currentTeam);
+Document document = (Document) context.getVariable("contextEntity");
+context.setVariable("associatedRequest",document.getAssociatedRequest());</script>
+        </tns:onEntry-script>
+        <tns:onExit-script scriptFormat="http://www.java.com/java">
+          <script>context.setVariable("team", null);</script>
+        </tns:onExit-script>
+      </extensionElements>
+      <ioSpecification>
+        <dataInput id="_22_documentInput" name="document" />
+        <dataInput id="_22_entityInput" name="entity" />
+        <dataInput id="_22_BodyInput" name="Body" />
+        <dataInput id="_22_SubjectInput" name="Subject" />
+        <dataInput id="_22_ToInput" name="To" />
+        <dataInput id="_22_notifyInput" name="notify" />
+        <dataInput id="_22_CommentInput" name="Comment" />
+        <dataInput id="_22_ActionsInput" name="Actions" />
+        <dataInput id="_22_ContentInput" name="Content" />
+        <dataInput id="_22_TaskNameInput" name="TaskName" />
+        <dataInput id="_22_GroupIdInput" name="GroupId" />
+        <dataInput id="_22_FromInput" name="From" />
+        <dataOutput id="_22_ResultOutput" name="Result" />
+        <inputSet>
+          <dataInputRefs>_22_documentInput</dataInputRefs>
+          <dataInputRefs>_22_entityInput</dataInputRefs>
+          <dataInputRefs>_22_BodyInput</dataInputRefs>
+          <dataInputRefs>_22_SubjectInput</dataInputRefs>
+          <dataInputRefs>_22_ToInput</dataInputRefs>
+          <dataInputRefs>_22_notifyInput</dataInputRefs>
+          <dataInputRefs>_22_CommentInput</dataInputRefs>
+          <dataInputRefs>_22_ActionsInput</dataInputRefs>
+          <dataInputRefs>_22_ContentInput</dataInputRefs>
+          <dataInputRefs>_22_TaskNameInput</dataInputRefs>
+          <dataInputRefs>_22_GroupIdInput</dataInputRefs>
+          <dataInputRefs>_22_FromInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+          <dataOutputRefs>_22_ResultOutput</dataOutputRefs>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_22_documentInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <sourceRef>associatedRequest</sourceRef>
+        <targetRef>_22_entityInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_22_BodyInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">document_signingCompleted_task_email_body</from>
+          <to xsi:type="tFormalExpression">_22_BodyInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_22_SubjectInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}: Document #{contextEntity.documentType.value} on Application #{contextEntity.associatedRequest.refNumber} is Signing Completed.</from>
+          <to xsi:type="tFormalExpression">_22_SubjectInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_22_ToInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{team.emailAddressForAllUsers}</from>
+          <to xsi:type="tFormalExpression">_22_ToInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_22_notifyInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">false</from>
+          <to xsi:type="tFormalExpression">_22_notifyInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_22_CommentInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}: Document #{contextEntity.documentType.value} on Application #{contextEntity.associatedRequest.refNumber} is Signing Completed.</from>
+          <to xsi:type="tFormalExpression">_22_CommentInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_22_ActionsInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Accepted,Declined</from>
+          <to xsi:type="tFormalExpression">_22_ActionsInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_22_ContentInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}: Document #{contextEntity.documentType.value} on Application #{contextEntity.associatedRequest.refNumber} is Signing Completed.</from>
+          <to xsi:type="tFormalExpression">_22_ContentInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_22_TaskNameInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Document Signing Verification</from>
+          <to xsi:type="tFormalExpression">_22_TaskNameInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_22_GroupIdInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{team.name}</from>
+          <to xsi:type="tFormalExpression">_22_GroupIdInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_22_FromInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">no-reply@thirdpillar.com</from>
+          <to xsi:type="tFormalExpression">_22_FromInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataOutputAssociation>
+        <sourceRef>_22_ResultOutput</sourceRef>
+        <targetRef>result</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <scriptTask id="_25" name="Status - Declined" scriptFormat="http://www.java.com/java" >
+      <script>com.thirdpillar.codify.loanpath.model.Document document=(com.thirdpillar.codify.loanpath.model.Document)context.getVariable("contextEntity");
+ 
+  com.thirdpillar.codify.loanpath.model.AttributeChoice docStatus=( com.thirdpillar.codify.loanpath.model.AttributeChoice)com.thirdpillar.foundation.service.LookupService.getResult("AttributeChoice.byKey", "key","DOCUMENT_STATUS_DECLINED");
+  document.setDocumentStatus(docStatus);</script>
+    </scriptTask>
+    <scriptTask id="_24" name="Status - Accepted" scriptFormat="http://www.java.com/java" >
+      <script>com.thirdpillar.codify.loanpath.model.Document document=(com.thirdpillar.codify.loanpath.model.Document)context.getVariable("contextEntity");
+ 
+  com.thirdpillar.codify.loanpath.model.AttributeChoice docStatus=( com.thirdpillar.codify.loanpath.model.AttributeChoice)com.thirdpillar.foundation.service.LookupService.getResult("AttributeChoice.byKey", "key","DOCUMENT_STATUS_ACCEPTED");
+  document.setDocumentStatus(docStatus);</script>
+    </scriptTask>
+    <task id="_27" name="Document Approval Task (To Team)" tns:taskName="LPUserTask" >
+      <extensionElements>
+        <tns:onEntry-script scriptFormat="http://www.java.com/java">
+          <script>Document document = (Document) context.getVariable("contextEntity");
+context.setVariable("associatedRequest",document.getAssociatedRequest());</script>
+        </tns:onEntry-script>
+        <tns:onExit-script scriptFormat="http://www.java.com/java">
+          <script>context.setVariable("team", null);</script>
+        </tns:onExit-script>
+      </extensionElements>
+      <ioSpecification>
+        <dataInput id="_27_documentInput" name="document" />
+        <dataInput id="_27_entityInput" name="entity" />
+        <dataInput id="_27_BodyInput" name="Body" />
+        <dataInput id="_27_SubjectInput" name="Subject" />
+        <dataInput id="_27_notifyInput" name="notify" />
+        <dataInput id="_27_ToInput" name="To" />
+        <dataInput id="_27_CommentInput" name="Comment" />
+        <dataInput id="_27_ActionsInput" name="Actions" />
+        <dataInput id="_27_ContentInput" name="Content" />
+        <dataInput id="_27_TaskNameInput" name="TaskName" />
+        <dataInput id="_27_GroupIdInput" name="GroupId" />
+        <dataInput id="_27_FromInput" name="From" />
+        <dataOutput id="_27_ResultOutput" name="Result" />
+        <inputSet>
+          <dataInputRefs>_27_documentInput</dataInputRefs>
+          <dataInputRefs>_27_entityInput</dataInputRefs>
+          <dataInputRefs>_27_BodyInput</dataInputRefs>
+          <dataInputRefs>_27_SubjectInput</dataInputRefs>
+          <dataInputRefs>_27_notifyInput</dataInputRefs>
+          <dataInputRefs>_27_ToInput</dataInputRefs>
+          <dataInputRefs>_27_CommentInput</dataInputRefs>
+          <dataInputRefs>_27_ActionsInput</dataInputRefs>
+          <dataInputRefs>_27_ContentInput</dataInputRefs>
+          <dataInputRefs>_27_TaskNameInput</dataInputRefs>
+          <dataInputRefs>_27_GroupIdInput</dataInputRefs>
+          <dataInputRefs>_27_FromInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+          <dataOutputRefs>_27_ResultOutput</dataOutputRefs>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_27_documentInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <sourceRef>associatedRequest</sourceRef>
+        <targetRef>_27_entityInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_27_BodyInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">document_pendingReview_task_email_body</from>
+          <to xsi:type="tFormalExpression">_27_BodyInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_27_SubjectInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}: Document ( #{contextEntity.documentType.value}) on Application  #{contextEntity.associatedRequest.refNumber} is Pending Review.</from>
+          <to xsi:type="tFormalExpression">_27_SubjectInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_27_notifyInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">false</from>
+          <to xsi:type="tFormalExpression">_27_notifyInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_27_ToInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{team.emailAddressForAllUsers}</from>
+          <to xsi:type="tFormalExpression">_27_ToInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_27_CommentInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}: Document ( #{contextEntity.documentType.value}) on Application  #{contextEntity.associatedRequest.refNumber} is Pending Review.</from>
+          <to xsi:type="tFormalExpression">_27_CommentInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_27_ActionsInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Approve,Regenerate</from>
+          <to xsi:type="tFormalExpression">_27_ActionsInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_27_ContentInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}: Document ( #{contextEntity.documentType.value}) on Application  #{contextEntity.associatedRequest.refNumber} is Pending Review.</from>
+          <to xsi:type="tFormalExpression">_27_ContentInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_27_TaskNameInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Document Pending Review</from>
+          <to xsi:type="tFormalExpression">_27_TaskNameInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_27_GroupIdInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{team.name}</from>
+          <to xsi:type="tFormalExpression">_27_GroupIdInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_27_FromInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">no-reply@thirdpillar.com</from>
+          <to xsi:type="tFormalExpression">_27_FromInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataOutputAssociation>
+        <sourceRef>_27_ResultOutput</sourceRef>
+        <targetRef>result</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <exclusiveGateway id="_26" name="Gateway" gatewayDirection="Converging" />
+    <exclusiveGateway id="_29" name="Gateway" gatewayDirection="Diverging" />
+    <scriptTask id="_28" name="Prepare Document For ESignature Initialization" scriptFormat="http://www.java.com/java" >
+      <script>      Document document = (Document) context.getVariable("contextEntity");
+      List&lt;Document&gt; esigDocList = new ArrayList&lt;Document&gt;();       
+       esigDocList.add(document);
+        
+        List docRequest = new ArrayList();
+         docRequest.add(esigDocList);
+         docRequest.add(document.getAssociatedRequest());
+        
+       Map&lt;String,Object&gt; inputMap = new HashMap&lt;String,Object&gt;();
+        inputMap.put("esigDocumentList",esigDocList);
+        inputMap.put("docRequest",docRequest);
+        
+ 
+      context.setVariable("esigDocumentList",esigDocList);
+      context.setVariable("docInputMap",inputMap);
+      
+      </script>
+    </scriptTask>
+    <task id="_34" name="Save Entity" tns:taskName="SaveEntity" >
+      <ioSpecification>
+        <dataInput id="_34_entityInput" name="entity" />
+        <inputSet>
+          <dataInputRefs>_34_entityInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_34_entityInput</targetRef>
+      </dataInputAssociation>
+    </task>
+    <endEvent id="_35" name="End" />
+    <task id="_38" name="Document Generation Call" tns:taskName="IntegrationTask" >
+      <ioSpecification>
+        <dataInput id="_38_inputInput" name="input" />
+        <dataInput id="_38_entityInput" name="entity" />
+        <dataInput id="_38_ServiceNameInput" name="ServiceName" />
+        <inputSet>
+          <dataInputRefs>_38_inputInput</dataInputRefs>
+          <dataInputRefs>_38_entityInput</dataInputRefs>
+          <dataInputRefs>_38_ServiceNameInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>docInputMap</sourceRef>
+        <targetRef>_38_inputInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_38_entityInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_38_ServiceNameInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">docGenClient</from>
+          <to xsi:type="tFormalExpression">_38_ServiceNameInput</to>
+        </assignment>
+      </dataInputAssociation>
+    </task>
+    <exclusiveGateway id="_39" name="Gateway" gatewayDirection="Converging" />
+    <intermediateCatchEvent id="_36" name="GenerateDocument" >
+      <signalEventDefinition signalRef="GenerateDocument"/>
+    </intermediateCatchEvent>
+    <scriptTask id="_37" name="Prepare For Document Generation" scriptFormat="http://www.java.com/java" >
+      <script>      Document document = (Document) context.getVariable("contextEntity");
+      document.setGeneratedFlag(false);
+      document.setUploadDttm(null);      
+      document.setUploadedStream(null);            
+      List&lt;Document&gt; documents = new ArrayList&lt;Document&gt;();  
+       documents.add(document);
+        
+       Map&lt;String,Object&gt; inputMap = new HashMap&lt;String,Object&gt;();
+        inputMap.put("documentList",documents);        
+        inputMap.put("contextEntity",document.getAssociatedRequest());                
+ 
+      context.setVariable("docInputMap",inputMap);
+      context.setVariable("docList",documents);</script>
+    </scriptTask>
+    <endEvent id="_42" name="End" />
+    <exclusiveGateway id="_43" name="Gateway" gatewayDirection="Diverging" />
+    <exclusiveGateway id="_40" name="Gateway" gatewayDirection="Diverging" />
+    <scriptTask id="_41" name="Verify All Signatures" scriptFormat="http://www.java.com/java" >
+      <script>Document document = (Document) context.getVariable("contextEntity");
+boolean signingComplete = true;
+
+for (DocumentSigner ds: document.getDocumentSigners()) {
+    if (!ds.getDocSignedFlag()) {
+        signingComplete = false;
+        break;
+    }
+}      
+
+context.setVariable("signaturesCompleted", signingComplete);</script>
+    </scriptTask>
+    <callActivity id="_46" name="Update Documents to Sales Force" calledElement="SalesforceUpdateProcess" >
+      <ioSpecification>
+        <dataInput id="_46_rootEntityInput" name="rootEntity" />
+        <dataInput id="_46_actionInput" name="action" />
+        <dataInput id="_46_entityOutInput" name="entityOut" />
+        <dataInput id="_46_contextEntityInput" name="contextEntity" />
+        <dataInput id="_46_entityInInput" name="entityIn" />
+        <dataInput id="_46_entityNameInput" name="entityName" />
+        <inputSet>
+          <dataInputRefs>_46_rootEntityInput</dataInputRefs>
+          <dataInputRefs>_46_actionInput</dataInputRefs>
+          <dataInputRefs>_46_entityOutInput</dataInputRefs>
+          <dataInputRefs>_46_contextEntityInput</dataInputRefs>
+          <dataInputRefs>_46_entityInInput</dataInputRefs>
+          <dataInputRefs>_46_entityNameInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>associatedRequest</sourceRef>
+        <targetRef>_46_rootEntityInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <sourceRef>action</sourceRef>
+        <targetRef>_46_actionInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <sourceRef>entityOut</sourceRef>
+        <targetRef>_46_entityOutInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_46_contextEntityInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <sourceRef>entityIn</sourceRef>
+        <targetRef>_46_entityInInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <sourceRef>entityName</sourceRef>
+        <targetRef>_46_entityNameInput</targetRef>
+      </dataInputAssociation>
+    </callActivity>
+    <scriptTask id="_47" name="Prepare for Sales Force Update" scriptFormat="http://www.java.com/java" >
+      <script>Document document = (Document) context.getVariable("contextEntity");
+List&lt;Document&gt; documents = new ArrayList&lt;Document&gt;();
+documents.add(document);
+
+context.setVariable("entityName","document");
+context.setVariable("action","update");
+context.setVariable("entityIn",documents);
+context.setVariable("entityOut",documents);
+context.setVariable("associatedRequest",document.getAssociatedRequest());</script>
+    </scriptTask>
+    <scriptTask id="_45" name="Status - Approved" scriptFormat="http://www.java.com/java" >
+      <script>Document document = (Document) context.getVariable("contextEntity");
+AttributeChoice docStatus=(AttributeChoice) LookupService.getResult("AttributeChoice.byKey", "key","DOCUMENT_STATUS_APPROVED");
+document.setDocumentStatus(docStatus);</script>
+    </scriptTask>
+    <task id="_51" name="Save Entity" tns:taskName="SaveEntity" >
+      <ioSpecification>
+        <dataInput id="_51_entityInput" name="entity" />
+        <inputSet>
+          <dataInputRefs>_51_entityInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_51_entityInput</targetRef>
+      </dataInputAssociation>
+    </task>
+    <exclusiveGateway id="_50" name="Gateway" gatewayDirection="Converging" />
+    <exclusiveGateway id="_49" name="Gateway" gatewayDirection="Diverging" />
+    <task id="_48" name="Initialize Document For Esignature - Call" tns:taskName="IntegrationTask" >
+      <ioSpecification>
+        <dataInput id="_48_inputInput" name="input" />
+        <dataInput id="_48_entityInput" name="entity" />
+        <dataInput id="_48_ServiceNameInput" name="ServiceName" />
+        <inputSet>
+          <dataInputRefs>_48_inputInput</dataInputRefs>
+          <dataInputRefs>_48_entityInput</dataInputRefs>
+          <dataInputRefs>_48_ServiceNameInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>docInputMap</sourceRef>
+        <targetRef>_48_inputInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_48_entityInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_48_ServiceNameInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">documentEsig</from>
+          <to xsi:type="tFormalExpression">_48_ServiceNameInput</to>
+        </assignment>
+      </dataInputAssociation>
+    </task>
+    <intermediateCatchEvent id="_55" name="Signal" >
+      <signalEventDefinition signalRef="PrintDocument"/>
+    </intermediateCatchEvent>
+    <task id="_54" name="Save Entity" tns:taskName="SaveEntity" >
+      <ioSpecification>
+        <dataInput id="_54_entityInput" name="entity" />
+        <inputSet>
+          <dataInputRefs>_54_entityInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_54_entityInput</targetRef>
+      </dataInputAssociation>
+    </task>
+    <exclusiveGateway id="_53" name="Gateway" gatewayDirection="Converging" />
+    <endEvent id="_58" name="End" />
+    <task id="_57" name="Save Document" tns:taskName="SaveEntity" >
+      <ioSpecification>
+        <dataInput id="_57_entityInput" name="entity" />
+        <inputSet>
+          <dataInputRefs>_57_entityInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_57_entityInput</targetRef>
+      </dataInputAssociation>
+    </task>
+    <task id="_56" name="Print Docs Service" tns:taskName="IntegrationTask" >
+      <ioSpecification>
+        <dataInput id="_56_entityInput" name="entity" />
+        <dataInput id="_56_ServiceNameInput" name="ServiceName" />
+        <inputSet>
+          <dataInputRefs>_56_entityInput</dataInputRefs>
+          <dataInputRefs>_56_ServiceNameInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_56_entityInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_56_ServiceNameInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">printDocumentService</from>
+          <to xsi:type="tFormalExpression">_56_ServiceNameInput</to>
+        </assignment>
+      </dataInputAssociation>
+    </task>
+    <scriptTask id="_63" name="Status - Archived" scriptFormat="http://www.java.com/java" >
+      <script>com.thirdpillar.codify.loanpath.model.Document document=(com.thirdpillar.codify.loanpath.model.Document)context.getVariable("contextEntity");
+
+com.thirdpillar.codify.loanpath.model.AttributeChoice docStatus=( com.thirdpillar.codify.loanpath.model.AttributeChoice)com.thirdpillar.foundation.service.LookupService.getResult("AttributeChoice.byKey", "key","DOCUMENT_STATUS_ARCHIVED");
+document.setDocumentStatus(docStatus);            </script>
+    </scriptTask>
+    <intermediateCatchEvent id="_62" name="ArchiveDocumentEvent" >
+      <signalEventDefinition signalRef="ArchiveDocumentEvent"/>
+    </intermediateCatchEvent>
+    <scriptTask id="_61" name="Watermark: Archive-&gt;Uploaded" scriptFormat="http://www.java.com/java" >
+      <script>Document doc=(Document)context.getVariable("contextEntity");
+PdfUtils pu = new PdfUtils();
+pu.watermark(doc);
+</script>
+    </scriptTask>
+    <scriptTask id="_68" name="Determine Team" scriptFormat="http://www.java.com/java" >
+      <script>Document document = (Document) context.getVariable("contextEntity");
+Facility associatedProduct = document.getAssociatedFacilities();
+Request associatedRequest= document.getAssociatedRequest();
+String teamName = "Team Blue"; // default
+if (associatedProduct == null) {
+    teamName = "Team Blue";
+} else if ("CREDIT_FACILITY_TYPE_START_UP_LOAN".equals(associatedProduct.getFacilityType().getKey())) {
+    teamName = "Team Red";
+} else if ("CREDIT_FACILITY_TYPE_ESTABLISHED_PRACTICE_LOAN".equals(associatedProduct.getFacilityType().getKey()) &amp;&amp; "PROJECT".equals(associatedProduct.getFacilityCategory().getKey())) {
+    teamName = "Team Red";
+} else if ("CREDIT_FACILITY_TYPE_EXPRESS_LOAN".equals(associatedProduct.getFacilityType().getKey())) {
+    teamName = "Team Red";
+} else if ("CREDIT_FACILITY_TYPE_LINE_OF_CREDIT".equals(associatedProduct.getFacilityType().getKey())) {
+    teamName = "Team Blue";
+} else if ("CREDIT_FACILITY_TYPE_ESTABLISHED_PRACTICE_LOAN".equals(associatedProduct.getFacilityType().getKey()) &amp;&amp; "NON_PROJECT".equals(associatedProduct.getFacilityCategory().getKey())) {
+    teamName = "Team Blue";
+} else if ("CREDIT_FACILITY_TYPE_PSA".equals(associatedProduct.getFacilityType().getKey())) {
+    teamName = "Team Blue";
+} else if ("CREDIT_FACILITY_TYPE_COMMERCIAL_REAL_ESTATE".equals(associatedProduct.getFacilityType().getKey())) {
+    teamName = "Team Green";
+}                
+
+Team currentTeam = (Team) LookupService.getResult("Team.byName","name", teamName); 
+context.setVariable("team", currentTeam);
+
+</script>
+    </scriptTask>
+    <exclusiveGateway id="_69" name="Gateway" gatewayDirection="Diverging" />
+    <exclusiveGateway id="_70" name="Gateway" gatewayDirection="Converging" />
+    <task id="_71" name="Document Approval Task (To Owner)" tns:taskName="LPUserTask" >
+      <extensionElements>
+        <tns:onEntry-script scriptFormat="http://www.java.com/java">
+          <script>Document document = (Document) context.getVariable("contextEntity");
+context.setVariable("associatedRequest",document.getAssociatedRequest());</script>
+        </tns:onEntry-script>
+        <tns:onExit-script scriptFormat="http://www.java.com/java">
+          <script>context.setVariable("team", null);</script>
+        </tns:onExit-script>
+      </extensionElements>
+      <ioSpecification>
+        <dataInput id="_71_documentInput" name="document" />
+        <dataInput id="_71_entityInput" name="entity" />
+        <dataInput id="_71_ActorIdInput" name="ActorId" />
+        <dataInput id="_71_BodyInput" name="Body" />
+        <dataInput id="_71_SubjectInput" name="Subject" />
+        <dataInput id="_71_ToInput" name="To" />
+        <dataInput id="_71_notifyInput" name="notify" />
+        <dataInput id="_71_CommentInput" name="Comment" />
+        <dataInput id="_71_ActionsInput" name="Actions" />
+        <dataInput id="_71_TaskNameInput" name="TaskName" />
+        <dataInput id="_71_ContentInput" name="Content" />
+        <dataInput id="_71_FromInput" name="From" />
+        <dataOutput id="_71_ResultOutput" name="Result" />
+        <inputSet>
+          <dataInputRefs>_71_documentInput</dataInputRefs>
+          <dataInputRefs>_71_entityInput</dataInputRefs>
+          <dataInputRefs>_71_ActorIdInput</dataInputRefs>
+          <dataInputRefs>_71_BodyInput</dataInputRefs>
+          <dataInputRefs>_71_SubjectInput</dataInputRefs>
+          <dataInputRefs>_71_ToInput</dataInputRefs>
+          <dataInputRefs>_71_notifyInput</dataInputRefs>
+          <dataInputRefs>_71_CommentInput</dataInputRefs>
+          <dataInputRefs>_71_ActionsInput</dataInputRefs>
+          <dataInputRefs>_71_TaskNameInput</dataInputRefs>
+          <dataInputRefs>_71_ContentInput</dataInputRefs>
+          <dataInputRefs>_71_FromInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+          <dataOutputRefs>_71_ResultOutput</dataOutputRefs>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_71_documentInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <sourceRef>associatedRequest</sourceRef>
+        <targetRef>_71_entityInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_71_ActorIdInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.uploadedStreamBy.username}</from>
+          <to xsi:type="tFormalExpression">_71_ActorIdInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_71_BodyInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">document_pendingReview_task_email_body</from>
+          <to xsi:type="tFormalExpression">_71_BodyInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_71_SubjectInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}:  #{contextEntity.documentType.value} Document  on Application #{contextEntity.associatedRequest.refNumber} is Pending Review.</from>
+          <to xsi:type="tFormalExpression">_71_SubjectInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_71_ToInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.uploadedStreamBy.contact.email}</from>
+          <to xsi:type="tFormalExpression">_71_ToInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_71_notifyInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">false</from>
+          <to xsi:type="tFormalExpression">_71_notifyInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_71_CommentInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}:  #{contextEntity.documentType.value} Document  on Application #{contextEntity.associatedRequest.refNumber} is Pending Review.</from>
+          <to xsi:type="tFormalExpression">_71_CommentInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_71_ActionsInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Approve,Regenerate</from>
+          <to xsi:type="tFormalExpression">_71_ActionsInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_71_TaskNameInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Document Pending Review</from>
+          <to xsi:type="tFormalExpression">_71_TaskNameInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_71_ContentInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}:  #{contextEntity.documentType.value} Document  on Application #{contextEntity.associatedRequest.refNumber} is Pending Review.</from>
+          <to xsi:type="tFormalExpression">_71_ContentInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_71_FromInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">no-reply@thirdpillar.com</from>
+          <to xsi:type="tFormalExpression">_71_FromInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataOutputAssociation>
+        <sourceRef>_71_ResultOutput</sourceRef>
+        <targetRef>result</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <exclusiveGateway id="_66" name="Gateway" gatewayDirection="Converging" />
+    <exclusiveGateway id="_67" name="Gateway" gatewayDirection="Diverging" />
+    <task id="_76" name="Reg B Document Archived Task" tns:taskName="LPUserTask" >
+      <extensionElements>
+        <tns:onEntry-script scriptFormat="http://www.java.com/java">
+          <script>com.thirdpillar.codify.loanpath.model.Document document = (com.thirdpillar.codify.loanpath.model.Document) context.getVariable("contextEntity");
+com.thirdpillar.codify.loanpath.model.Team currentTeam = null;
+if(("DOCUMENT_TYPE_REG_B_NOTICE_PENDING_NOIA".equalsIgnoreCase(document.getDocumentType().getKey()) || "DOCUMENT_TYPE_REG_B_NOTICE_WITHDRAWN".equalsIgnoreCase(document.getDocumentType().getKey()) || "DOCUMENT_TYPE_REG_B_NOTICE_DECLINED".equalsIgnoreCase(document.getDocumentType().getKey()) || "DOCUMENT_TYPE_REG_B_NOTICE_APPROVED".equalsIgnoreCase(document.getDocumentType().getKey()) || "DOCUMENT_TYPE_REG_B_NOTICE_MODIFICATION".equalsIgnoreCase(document.getDocumentType().getKey())) &amp;&amp; "DOCUMENT_STATUS_ARCHIVED".equalsIgnoreCase(document.getDocumentStatus().getKey())) {
+currentTeam = (com.thirdpillar.codify.loanpath.model.Team) com.thirdpillar.foundation.service.LookupService.getResult("Team.byName","name", "Credit Manager Team"); 
+}
+context.setVariable("team", currentTeam);</script>
+        </tns:onEntry-script>
+        <tns:onExit-script scriptFormat="http://www.java.com/java">
+          <script>context.setVariable("team", null);</script>
+        </tns:onExit-script>
+      </extensionElements>
+      <ioSpecification>
+        <dataInput id="_76_documentInput" name="document" />
+        <dataInput id="_76_entityInput" name="entity" />
+        <dataInput id="_76_BodyInput" name="Body" />
+        <dataInput id="_76_SubjectInput" name="Subject" />
+        <dataInput id="_76_notifyInput" name="notify" />
+        <dataInput id="_76_ToInput" name="To" />
+        <dataInput id="_76_CommentInput" name="Comment" />
+        <dataInput id="_76_ActionsInput" name="Actions" />
+        <dataInput id="_76_ContentInput" name="Content" />
+        <dataInput id="_76_TaskNameInput" name="TaskName" />
+        <dataInput id="_76_GroupIdInput" name="GroupId" />
+        <dataInput id="_76_FromInput" name="From" />
+        <dataOutput id="_76_ResultOutput" name="Result" />
+        <inputSet>
+          <dataInputRefs>_76_documentInput</dataInputRefs>
+          <dataInputRefs>_76_entityInput</dataInputRefs>
+          <dataInputRefs>_76_BodyInput</dataInputRefs>
+          <dataInputRefs>_76_SubjectInput</dataInputRefs>
+          <dataInputRefs>_76_notifyInput</dataInputRefs>
+          <dataInputRefs>_76_ToInput</dataInputRefs>
+          <dataInputRefs>_76_CommentInput</dataInputRefs>
+          <dataInputRefs>_76_ActionsInput</dataInputRefs>
+          <dataInputRefs>_76_ContentInput</dataInputRefs>
+          <dataInputRefs>_76_TaskNameInput</dataInputRefs>
+          <dataInputRefs>_76_GroupIdInput</dataInputRefs>
+          <dataInputRefs>_76_FromInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+          <dataOutputRefs>_76_ResultOutput</dataOutputRefs>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_76_documentInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <sourceRef>associatedRequest</sourceRef>
+        <targetRef>_76_entityInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_76_BodyInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Reg_B_DocumentArchived_Task_email_body</from>
+          <to xsi:type="tFormalExpression">_76_BodyInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_76_SubjectInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}: Document #{contextEntity.documentType.value} on Application #{contextEntity.associatedRequest.refNumber} has been Archived.</from>
+          <to xsi:type="tFormalExpression">_76_SubjectInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_76_notifyInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">true</from>
+          <to xsi:type="tFormalExpression">_76_notifyInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_76_ToInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{team.emailAddressForAllUsers}</from>
+          <to xsi:type="tFormalExpression">_76_ToInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_76_CommentInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}: Document #{contextEntity.documentType.value} on Application #{contextEntity.associatedRequest.refNumber} has been Archived.</from>
+          <to xsi:type="tFormalExpression">_76_CommentInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_76_ActionsInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Complete</from>
+          <to xsi:type="tFormalExpression">_76_ActionsInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_76_ContentInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}: Document #{contextEntity.documentType.value} on Application #{contextEntity.associatedRequest.refNumber} has been Archived.</from>
+          <to xsi:type="tFormalExpression">_76_ContentInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_76_TaskNameInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Reg B Document Archived</from>
+          <to xsi:type="tFormalExpression">_76_TaskNameInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_76_GroupIdInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{team.name}</from>
+          <to xsi:type="tFormalExpression">_76_GroupIdInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_76_FromInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">no-reply@thirdpillar.com</from>
+          <to xsi:type="tFormalExpression">_76_FromInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataOutputAssociation>
+        <sourceRef>_76_ResultOutput</sourceRef>
+        <targetRef>result</targetRef>
+      </dataOutputAssociation>
+    </task>
+    <exclusiveGateway id="_77" name="Gateway" gatewayDirection="Diverging" />
+    <exclusiveGateway id="_78" name="Gateway" gatewayDirection="Converging" />
+    <scriptTask id="_79" name="Status - Generation Failed" scriptFormat="http://www.java.com/java" >
+      <script>Document document = (Document) context.getVariable("contextEntity");
+AttributeChoice docStatus=(AttributeChoice) LookupService.getResult("AttributeChoice.byKey", "key","DOCUMENT_STATUS_GENERATION_FAILED");
+document.setDocumentStatus(docStatus);</script>
+    </scriptTask>
+    <scriptTask id="_72" name="Auto Approve" scriptFormat="http://www.java.com/java" >
+      <script>context.setVariable("result","Approve");</script>
+    </scriptTask>
+    <scriptTask id="_73" name="Check If Doc eligible for Auto Approval" scriptFormat="http://www.java.com/java" >
+      <script>Document document = (Document) context.getVariable("contextEntity");
+List&lt;String&gt;autoApproveDocTypes = new ArrayList&lt;String&gt;();
+autoApproveDocTypes.add("DOCUMENT_TYPE_REG_B_NOTICE_WITHDRAWN");
+autoApproveDocTypes.add("DOCUMENT_TYPE_REG_B_NOTICE_APPROVED");
+autoApproveDocTypes.add("DOCUMENT_TYPE_REG_B_NOTICE_DECLINED");
+autoApproveDocTypes.add("DOCUMENT_TYPE_REG_B_NOTICE_PENDING_NOIA");
+autoApproveDocTypes.add("DOCUMENT_TYPE_REG_B_NOTICE_MODIFICATION");
+
+boolean isDocEligibleForAutoApproval = false;
+
+String documentTypeKey = document.getDocumentType().getKey();
+
+if(autoApproveDocTypes.contains(documentTypeKey)){
+    isDocEligibleForAutoApproval = true;
+}
+
+context.setVariable("autoApproveDocIndicator",isDocEligibleForAutoApproval);</script>
+    </scriptTask>
+    <intermediateCatchEvent id="_74" name="Signal" >
+      <signalEventDefinition signalRef="AutoGenerateDocument"/>
+    </intermediateCatchEvent>
+    <task id="_75" name="Auto Generate Timer (5m Delay)" tns:taskName="TimerTask" >
+      <extensionElements>
+        <tns:onExit-script scriptFormat="http://www.java.com/java">
+          <script>context.setVariable("taskOnGenerationFailure",true);</script>
+        </tns:onExit-script>
+      </extensionElements>
+      <ioSpecification>
+        <dataInput id="_75_delayInput" name="delay" />
+        <inputSet>
+          <dataInputRefs>_75_delayInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <targetRef>_75_delayInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">2m</from>
+          <to xsi:type="tFormalExpression">_75_delayInput</to>
+        </assignment>
+      </dataInputAssociation>
+    </task>
+    <scriptTask id="_85" name="Archive: Uploaded-&gt;Archive" scriptFormat="http://www.java.com/java" >
+      <script>Document doc=(Document)context.getVariable("contextEntity");
+PdfUtils pu = new PdfUtils();
+pu.archive(doc);
+</script>
+    </scriptTask>
+    <task id="_84" name="Save Entity" tns:taskName="SaveEntity" >
+      <ioSpecification>
+        <dataInput id="_84_entityInput" name="entity" />
+        <inputSet>
+          <dataInputRefs>_84_entityInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_84_entityInput</targetRef>
+      </dataInputAssociation>
+    </task>
+    <endEvent id="_81" name="End" />
+    <task id="_80" name="Auto Doc Generation - Failed" tns:taskName="LPUserTask" >
+      <extensionElements>
+        <tns:onEntry-script scriptFormat="http://www.java.com/java">
+          <script>context.setVariable("taskOnGenerationFailure",false);
+Document document = (Document) context.getVariable("contextEntity");
+Request associatedReq = document.getAssociatedRequest();
+context.setVariable("associatedRequest",associatedReq);
+if (associatedReq.getCreditAnalyst() != null) {
+    context.setVariable("generationFailedTaskOwner", associatedReq.getCreditAnalyst().getUsername());
+    context.setVariable("generationFailedTaskEmails", associatedReq.getCreditAnalyst().getContact().getEmail());
+} else {
+    Team currentTeam = (Team) LookupService.getResult("Team.byName","name", "Credit Manager Team"); 
+    context.setVariable("generationFailedTaskTeam", currentTeam.getName());
+    context.setVariable("generationFailedTaskEmails", currentTeam.getEmailAddressForAllUsers());
+}</script>
+        </tns:onEntry-script>
+      </extensionElements>
+      <ioSpecification>
+        <dataInput id="_80_documentInput" name="document" />
+        <dataInput id="_80_entityInput" name="entity" />
+        <dataInput id="_80_ActorIdInput" name="ActorId" />
+        <dataInput id="_80_BodyInput" name="Body" />
+        <dataInput id="_80_SubjectInput" name="Subject" />
+        <dataInput id="_80_ToInput" name="To" />
+        <dataInput id="_80_notifyInput" name="notify" />
+        <dataInput id="_80_CommentInput" name="Comment" />
+        <dataInput id="_80_ActionsInput" name="Actions" />
+        <dataInput id="_80_ContentInput" name="Content" />
+        <dataInput id="_80_TaskNameInput" name="TaskName" />
+        <dataInput id="_80_GroupIdInput" name="GroupId" />
+        <dataInput id="_80_FromInput" name="From" />
+        <inputSet>
+          <dataInputRefs>_80_documentInput</dataInputRefs>
+          <dataInputRefs>_80_entityInput</dataInputRefs>
+          <dataInputRefs>_80_ActorIdInput</dataInputRefs>
+          <dataInputRefs>_80_BodyInput</dataInputRefs>
+          <dataInputRefs>_80_SubjectInput</dataInputRefs>
+          <dataInputRefs>_80_ToInput</dataInputRefs>
+          <dataInputRefs>_80_notifyInput</dataInputRefs>
+          <dataInputRefs>_80_CommentInput</dataInputRefs>
+          <dataInputRefs>_80_ActionsInput</dataInputRefs>
+          <dataInputRefs>_80_ContentInput</dataInputRefs>
+          <dataInputRefs>_80_TaskNameInput</dataInputRefs>
+          <dataInputRefs>_80_GroupIdInput</dataInputRefs>
+          <dataInputRefs>_80_FromInput</dataInputRefs>
+        </inputSet>
+        <outputSet>
+        </outputSet>
+      </ioSpecification>
+      <dataInputAssociation>
+        <sourceRef>contextEntity</sourceRef>
+        <targetRef>_80_documentInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <sourceRef>associatedRequest</sourceRef>
+        <targetRef>_80_entityInput</targetRef>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_80_ActorIdInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{generationFailedTaskOwner}</from>
+          <to xsi:type="tFormalExpression">_80_ActorIdInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_80_BodyInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">document_generationFailed_task_email_body</from>
+          <to xsi:type="tFormalExpression">_80_BodyInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_80_SubjectInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}:  #{contextEntity.documentType.value} Document  on Application #{contextEntity.associatedRequest.refNumber} failed to generate.</from>
+          <to xsi:type="tFormalExpression">_80_SubjectInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_80_ToInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{generationFailedTaskEmails}</from>
+          <to xsi:type="tFormalExpression">_80_ToInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_80_notifyInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">true</from>
+          <to xsi:type="tFormalExpression">_80_notifyInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_80_CommentInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}:  #{contextEntity.documentType.value} Document  on Application #{contextEntity.associatedRequest.refNumber} failed to generate.</from>
+          <to xsi:type="tFormalExpression">_80_CommentInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_80_ActionsInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Complete</from>
+          <to xsi:type="tFormalExpression">_80_ActionsInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_80_ContentInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{contextEntity.associatedRequest.relationship.name}:  #{contextEntity.documentType.value} Document  on Application #{contextEntity.associatedRequest.refNumber} failed to generate.</from>
+          <to xsi:type="tFormalExpression">_80_ContentInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_80_TaskNameInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">Document Generation Failure</from>
+          <to xsi:type="tFormalExpression">_80_TaskNameInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_80_GroupIdInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">#{generationFailedTaskTeam}</from>
+          <to xsi:type="tFormalExpression">_80_GroupIdInput</to>
+        </assignment>
+      </dataInputAssociation>
+      <dataInputAssociation>
+        <targetRef>_80_FromInput</targetRef>
+        <assignment>
+          <from xsi:type="tFormalExpression">no-reply@thirdpillar.com</from>
+          <to xsi:type="tFormalExpression">_80_FromInput</to>
+        </assignment>
+      </dataInputAssociation>
+    </task>
+    <endEvent id="_83" name="End" />
+    <exclusiveGateway id="_82" name="Gateway" gatewayDirection="Diverging" />
+
+    <!-- connections -->
+    <sequenceFlow id="_10-_7" sourceRef="_10" targetRef="_7" />
+    <sequenceFlow id="_11-_10" sourceRef="_11" targetRef="_10" />
+    <sequenceFlow id="_9-_11" sourceRef="_9" targetRef="_11" />
+    <sequenceFlow id="_39-_13" sourceRef="_39" targetRef="_13" />
+    <sequenceFlow id="_40-_20" sourceRef="_40" targetRef="_20" name="Signing Completed" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >return ((Boolean) context.getVariable("signaturesCompleted") == true);</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_22-_23" sourceRef="_22" targetRef="_23" />
+    <sequenceFlow id="_20-_22" sourceRef="_20" targetRef="_22" />
+    <sequenceFlow id="_23-_25" sourceRef="_23" targetRef="_25" name="Declined" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >String userAction = (String) context.getVariable("result");
+
+if ("Declined".equals(userAction)) {
+    return true;
+}else{
+    return false;
+}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_23-_24" sourceRef="_23" targetRef="_24" name="Accepted" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >
+String userAction = (String) context.getVariable("result");
+
+if ("Accepted".equals(userAction)) {
+    return true;
+}else{
+    return false;
+}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_68-_27" sourceRef="_68" targetRef="_27" />
+    <sequenceFlow id="_25-_26" sourceRef="_25" targetRef="_26" />
+    <sequenceFlow id="_61-_26" sourceRef="_61" targetRef="_26" />
+    <sequenceFlow id="_49-_29" sourceRef="_49" targetRef="_29" name="Approve" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >String taskAction = (String) context.getVariable("result");
+return "Approve".equals(taskAction);</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_29-_28" sourceRef="_29" targetRef="_28" name="Esignature" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >Document document = (Document) context.getVariable("contextEntity");
+return (document.getEsignatureRqd() &amp;&amp; !document.getWetSignature());</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_46-_34" sourceRef="_46" targetRef="_34" />
+    <sequenceFlow id="_34-_35" sourceRef="_34" targetRef="_35" />
+    <sequenceFlow id="_37-_38" sourceRef="_37" targetRef="_38" />
+    <sequenceFlow id="_12-_39" sourceRef="_12" targetRef="_39" />
+    <sequenceFlow id="_43-_39" sourceRef="_43" targetRef="_39" name="Document Generated" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >Document document = (Document) context.getVariable("contextEntity");
+return document.getGeneratedFlag();</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_67-_39" sourceRef="_67" targetRef="_39" name="Initialize Document Failed" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" > Document document = (Document) context.getVariable("contextEntity");
+ return (document.getInitializeDttm() == null);</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_50-_37" sourceRef="_50" targetRef="_37" />
+    <sequenceFlow id="_40-_42" sourceRef="_40" targetRef="_42" name="Signatures Pending" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >return !((Boolean) context.getVariable("signaturesCompleted") == true);</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_38-_43" sourceRef="_38" targetRef="_43" />
+    <sequenceFlow id="_41-_40" sourceRef="_41" targetRef="_40" />
+    <sequenceFlow id="_54-_41" sourceRef="_54" targetRef="_41" />
+    <sequenceFlow id="_47-_46" sourceRef="_47" targetRef="_46" />
+    <sequenceFlow id="_66-_47" sourceRef="_66" targetRef="_47" />
+    <sequenceFlow id="_53-_45" sourceRef="_53" targetRef="_45" />
+    <sequenceFlow id="_79-_51" sourceRef="_79" targetRef="_51" />
+    <sequenceFlow id="_49-_50" sourceRef="_49" targetRef="_50" name="Regenerate" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >String taskAction = (String) context.getVariable("result");
+return "Regenerate".equals(taskAction);</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_36-_50" sourceRef="_36" targetRef="_50" />
+    <sequenceFlow id="_75-_50" sourceRef="_75" targetRef="_50" />
+    <sequenceFlow id="_70-_49" sourceRef="_70" targetRef="_49" />
+    <sequenceFlow id="_28-_48" sourceRef="_28" targetRef="_48" />
+    <sequenceFlow id="_19-_54" sourceRef="_19" targetRef="_54" />
+    <sequenceFlow id="_29-_53" sourceRef="_29" targetRef="_53" name="Wet Signature" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >Document document = (Document) context.getVariable("contextEntity");
+return !(document.getEsignatureRqd() &amp;&amp; !document.getWetSignature());</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_85-_53" sourceRef="_85" targetRef="_53" />
+    <sequenceFlow id="_57-_58" sourceRef="_57" targetRef="_58" />
+    <sequenceFlow id="_56-_57" sourceRef="_56" targetRef="_57" />
+    <sequenceFlow id="_55-_56" sourceRef="_55" targetRef="_56" />
+    <sequenceFlow id="_62-_63" sourceRef="_62" targetRef="_63" />
+    <sequenceFlow id="_24-_61" sourceRef="_24" targetRef="_61" />
+    <sequenceFlow id="_69-_68" sourceRef="_69" targetRef="_68" name="To Team " >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >Document doc = (Document) context.getVariable("contextEntity");
+Boolean autoApprvDocIndicator = (Boolean) context.getVariable("autoApproveDocIndicator");
+Facility associatedProd = doc.getAssociatedFacilities();
+
+if (!autoApprvDocIndicator &amp;&amp; (doc.getUploadedStreamBy()== null || doc.getUploadedStreamBy().getUsername()== null || doc.getUploadedStreamBy().getUsername().equals("")))
+ {
+    return true;
+} else {
+    return false;
+}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_73-_69" sourceRef="_73" targetRef="_69" />
+    <sequenceFlow id="_27-_70" sourceRef="_27" targetRef="_70" />
+    <sequenceFlow id="_71-_70" sourceRef="_71" targetRef="_70" />
+    <sequenceFlow id="_72-_70" sourceRef="_72" targetRef="_70" />
+    <sequenceFlow id="_69-_71" sourceRef="_69" targetRef="_71" name="To Owner" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >Document doc = (Document) context.getVariable("contextEntity");
+Facility associatedProd = doc.getAssociatedFacilities();
+Boolean autoApprvDocIndicator = (Boolean) context.getVariable("autoApproveDocIndicator");
+
+
+if (!autoApprvDocIndicator &amp;&amp; (doc.getUploadedStreamBy() != null &amp;&amp; doc.getUploadedStreamBy().getUsername() != null &amp;&amp; !(doc.getUploadedStreamBy().getUsername().equals(""))))
+ {
+    return true;
+} else {
+    return false;
+}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_26-_66" sourceRef="_26" targetRef="_66" />
+    <sequenceFlow id="_45-_66" sourceRef="_45" targetRef="_66" />
+    <sequenceFlow id="_78-_66" sourceRef="_78" targetRef="_66" />
+    <sequenceFlow id="_48-_67" sourceRef="_48" targetRef="_67" />
+    <sequenceFlow id="_77-_76" sourceRef="_77" targetRef="_76" name="Reg B Document" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >
+com.thirdpillar.codify.loanpath.model.Document document = (com.thirdpillar.codify.loanpath.model.Document) context.getVariable("contextEntity");
+context.setVariable("associatedRequest",document.getAssociatedRequest());
+
+if(("DOCUMENT_TYPE_REG_B_NOTICE_PENDING_NOIA".equalsIgnoreCase(document.getDocumentType().getKey()) 
+            || "DOCUMENT_TYPE_REG_B_NOTICE_WITHDRAWN".equalsIgnoreCase(document.getDocumentType().getKey()) 
+            || "DOCUMENT_TYPE_REG_B_NOTICE_DECLINED".equalsIgnoreCase(document.getDocumentType().getKey()) 
+            || "DOCUMENT_TYPE_REG_B_NOTICE_APPROVED".equalsIgnoreCase(document.getDocumentType().getKey()) 
+            || "DOCUMENT_TYPE_REG_B_NOTICE_MODIFICATION".equalsIgnoreCase(document.getDocumentType().getKey())
+    ) ) {
+return true;
+}
+else
+{
+return false;
+
+}
+
+</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_63-_77" sourceRef="_63" targetRef="_77" />
+    <sequenceFlow id="_77-_78" sourceRef="_77" targetRef="_78" name="Document Without Type Check" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >com.thirdpillar.codify.loanpath.model.Document document = (com.thirdpillar.codify.loanpath.model.Document) context.getVariable("contextEntity");
+context.setVariable("associatedRequest",document.getAssociatedRequest());
+
+if(("DOCUMENT_TYPE_REG_B_NOTICE_PENDING_NOIA".equalsIgnoreCase(document.getDocumentType().getKey()) 
+            || "DOCUMENT_TYPE_REG_B_NOTICE_WITHDRAWN".equalsIgnoreCase(document.getDocumentType().getKey()) 
+            || "DOCUMENT_TYPE_REG_B_NOTICE_DECLINED".equalsIgnoreCase(document.getDocumentType().getKey()) 
+            || "DOCUMENT_TYPE_REG_B_NOTICE_APPROVED".equalsIgnoreCase(document.getDocumentType().getKey()) 
+            || "DOCUMENT_TYPE_REG_B_NOTICE_MODIFICATION".equalsIgnoreCase(document.getDocumentType().getKey())
+        ) ) {
+    return false;
+} else {
+    return true;
+}
+
+</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_76-_78" sourceRef="_76" targetRef="_78" />
+    <sequenceFlow id="_43-_79" sourceRef="_43" targetRef="_79" name="Generation Failed" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >Document document = (Document) context.getVariable("contextEntity");
+return !document.getGeneratedFlag();</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_69-_72" sourceRef="_69" targetRef="_72" name="Auto Approve" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >Boolean autoApprvDocIndicator = (Boolean) context.getVariable("autoApproveDocIndicator");
+
+if(autoApprvDocIndicator){
+  return true;
+}else{
+ return false;
+}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_84-_73" sourceRef="_84" targetRef="_73" />
+    <sequenceFlow id="_74-_75" sourceRef="_74" targetRef="_75" />
+    <sequenceFlow id="_67-_85" sourceRef="_67" targetRef="_85" name="Archive" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" > Document document = (Document) context.getVariable("contextEntity");
+ return (document.getInitializeDttm() != null);</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_13-_84" sourceRef="_13" targetRef="_84" />
+    <sequenceFlow id="_80-_81" sourceRef="_80" targetRef="_81" />
+    <sequenceFlow id="_82-_80" sourceRef="_82" targetRef="_80" name="Create Task" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >Boolean createTask = (Boolean) taskOnGenerationFailure;
+if (createTask != null &amp;&amp; createTask) {
+    return true;
+} else {
+    return false;
+}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_82-_83" sourceRef="_82" targetRef="_83" name="No Task" >
+      <conditionExpression xsi:type="tFormalExpression" language="http://www.java.com/java" >Boolean createTask = (Boolean) taskOnGenerationFailure;
+if (createTask != null &amp;&amp; createTask) {
+    return false;
+} else {
+    return true;
+}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="_51-_82" sourceRef="_51" targetRef="_82" />
+
+  </process>
+
+  <bpmndi:BPMNDiagram>
+    <bpmndi:BPMNPlane bpmnElement="DocumentFlow" >
+      <bpmndi:BPMNShape bpmnElement="_7" >
+        <dc:Bounds x="95" y="228" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_9" >
+        <dc:Bounds x="85" y="8" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_10" >
+        <dc:Bounds x="71" y="146" width="100" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_11" >
+        <dc:Bounds x="73" y="76" width="80" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_12" >
+        <dc:Bounds x="303" y="10" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_13" >
+        <dc:Bounds x="212" y="151" width="174" height="45" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_19" >
+        <dc:Bounds x="1271" y="28" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_20" >
+        <dc:Bounds x="1193" y="299" width="237" height="34" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_23" >
+        <dc:Bounds x="1286" y="466" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_22" >
+        <dc:Bounds x="1222" y="389" width="177" height="30" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_25" >
+        <dc:Bounds x="1322" y="562" width="188" height="28" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_24" >
+        <dc:Bounds x="1117" y="566" width="176" height="27" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_27" >
+        <dc:Bounds x="8" y="454" width="220" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_26" >
+        <dc:Bounds x="1288" y="761" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_29" >
+        <dc:Bounds x="297" y="649" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_28" >
+        <dc:Bounds x="483" y="665" width="284" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_34" >
+        <dc:Bounds x="854" y="1346" width="100" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_35" >
+        <dc:Bounds x="888" y="1436" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_38" >
+        <dc:Bounds x="735" y="87" width="195" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_39" >
+        <dc:Bounds x="302" y="85" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_36" >
+        <dc:Bounds x="944" y="46" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_37" >
+        <dc:Bounds x="760" y="421" width="202" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_42" >
+        <dc:Bounds x="1457" y="140" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_43" >
+        <dc:Bounds x="538" y="88" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_40" >
+        <dc:Bounds x="1279" y="231" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_41" >
+        <dc:Bounds x="1198" y="160" width="205" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_46" >
+        <dc:Bounds x="793" y="1268" width="240" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_47" >
+        <dc:Bounds x="788" y="1186" width="249" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_45" >
+        <dc:Bounds x="234" y="959" width="182" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_51" >
+        <dc:Bounds x="657" y="250" width="100" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_50" >
+        <dc:Bounds x="838" y="549" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_49" >
+        <dc:Bounds x="297" y="567" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_48" >
+        <dc:Bounds x="476" y="758" width="276" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_55" >
+        <dc:Bounds x="1809" y="36" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_54" >
+        <dc:Bounds x="1244" y="94" width="100" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_53" >
+        <dc:Bounds x="308" y="832" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_58" >
+        <dc:Bounds x="1806" y="363" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_57" >
+        <dc:Bounds x="1781" y="247" width="100" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_56" >
+        <dc:Bounds x="1782" y="140" width="100" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_63" >
+        <dc:Bounds x="1595" y="108" width="155" height="31" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_62" >
+        <dc:Bounds x="1645" y="18" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_61" >
+        <dc:Bounds x="1156" y="645" width="96" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_68" >
+        <dc:Bounds x="5" y="308" width="185" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_69" >
+        <dc:Bounds x="301" y="306" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_70" >
+        <dc:Bounds x="299" y="484" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_71" >
+        <dc:Bounds x="365" y="382" width="192" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_66" >
+        <dc:Bounds x="883" y="1050" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_67" >
+        <dc:Bounds x="594" y="835" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_76" >
+        <dc:Bounds x="1598" y="267" width="174" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_77" >
+        <dc:Bounds x="1651" y="189" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_78" >
+        <dc:Bounds x="1659" y="360" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_79" >
+        <dc:Bounds x="598" y="168" width="183" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_72" >
+        <dc:Bounds x="176" y="381" width="152" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_73" >
+        <dc:Bounds x="206" y="241" width="258" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_74" >
+        <dc:Bounds x="1024" y="47" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_75" >
+        <dc:Bounds x="981" y="147" width="117" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_85" >
+        <dc:Bounds x="412" y="832" width="74" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_84" >
+        <dc:Bounds x="441" y="182" width="100" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_81" >
+        <dc:Bounds x="711" y="438" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_80" >
+        <dc:Bounds x="617" y="340" width="228" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_83" >
+        <dc:Bounds x="551" y="435" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="_82" >
+        <dc:Bounds x="552" y="278" width="48" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="_10-_7" >
+        <di:waypoint x="121" y="170" />
+        <di:waypoint x="119" y="252" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_11-_10" >
+        <di:waypoint x="113" y="100" />
+        <di:waypoint x="121" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_9-_11" >
+        <di:waypoint x="109" y="32" />
+        <di:waypoint x="113" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_39-_13" >
+        <di:waypoint x="326" y="109" />
+        <di:waypoint x="299" y="173" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_40-_20" >
+        <di:waypoint x="1303" y="255" />
+        <di:waypoint x="1311" y="316" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_22-_23" >
+        <di:waypoint x="1310" y="404" />
+        <di:waypoint x="1310" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_20-_22" >
+        <di:waypoint x="1311" y="316" />
+        <di:waypoint x="1310" y="404" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_23-_25" >
+        <di:waypoint x="1310" y="490" />
+        <di:waypoint x="1416" y="576" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_23-_24" >
+        <di:waypoint x="1310" y="490" />
+        <di:waypoint x="1205" y="579" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_68-_27" >
+        <di:waypoint x="97" y="332" />
+        <di:waypoint x="118" y="478" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_25-_26" >
+        <di:waypoint x="1416" y="576" />
+        <di:waypoint x="1312" y="785" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_61-_26" >
+        <di:waypoint x="1204" y="669" />
+        <di:waypoint x="1312" y="785" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_49-_29" >
+        <di:waypoint x="321" y="591" />
+        <di:waypoint x="321" y="673" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_29-_28" >
+        <di:waypoint x="321" y="673" />
+        <di:waypoint x="609" y="623" />
+        <di:waypoint x="625" y="689" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_46-_34" >
+        <di:waypoint x="913" y="1292" />
+        <di:waypoint x="904" y="1370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_34-_35" >
+        <di:waypoint x="904" y="1370" />
+        <di:waypoint x="912" y="1460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_37-_38" >
+        <di:waypoint x="861" y="445" />
+        <di:waypoint x="832" y="111" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_12-_39" >
+        <di:waypoint x="327" y="34" />
+        <di:waypoint x="326" y="109" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_43-_39" >
+        <di:waypoint x="562" y="112" />
+        <di:waypoint x="326" y="109" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_67-_39" >
+        <di:waypoint x="618" y="859" />
+        <di:waypoint x="855" y="859" />
+        <di:waypoint x="1092" y="863" />
+        <di:waypoint x="1099" y="413" />
+        <di:waypoint x="1113" y="37" />
+        <di:waypoint x="664" y="37" />
+        <di:waypoint x="357" y="38" />
+        <di:waypoint x="326" y="109" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_50-_37" >
+        <di:waypoint x="862" y="573" />
+        <di:waypoint x="861" y="445" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_40-_42" >
+        <di:waypoint x="1303" y="255" />
+        <di:waypoint x="1481" y="254" />
+        <di:waypoint x="1481" y="164" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_38-_43" >
+        <di:waypoint x="832" y="111" />
+        <di:waypoint x="562" y="112" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_41-_40" >
+        <di:waypoint x="1300" y="184" />
+        <di:waypoint x="1303" y="255" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_54-_41" >
+        <di:waypoint x="1294" y="118" />
+        <di:waypoint x="1300" y="184" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_47-_46" >
+        <di:waypoint x="912" y="1210" />
+        <di:waypoint x="913" y="1292" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_66-_47" >
+        <di:waypoint x="907" y="1074" />
+        <di:waypoint x="912" y="1210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_53-_45" >
+        <di:waypoint x="332" y="856" />
+        <di:waypoint x="325" y="983" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_79-_51" >
+        <di:waypoint x="689" y="192" />
+        <di:waypoint x="707" y="274" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_49-_50" >
+        <di:waypoint x="321" y="591" />
+        <di:waypoint x="862" y="573" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_36-_50" >
+        <di:waypoint x="968" y="70" />
+        <di:waypoint x="969" y="505" />
+        <di:waypoint x="862" y="573" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_75-_50" >
+        <di:waypoint x="1039" y="171" />
+        <di:waypoint x="1042" y="559" />
+        <di:waypoint x="862" y="573" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_70-_49" >
+        <di:waypoint x="323" y="508" />
+        <di:waypoint x="321" y="591" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_28-_48" >
+        <di:waypoint x="625" y="689" />
+        <di:waypoint x="614" y="782" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_19-_54" >
+        <di:waypoint x="1295" y="52" />
+        <di:waypoint x="1294" y="118" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_29-_53" >
+        <di:waypoint x="321" y="673" />
+        <di:waypoint x="332" y="856" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_85-_53" >
+        <di:waypoint x="449" y="856" />
+        <di:waypoint x="332" y="856" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_57-_58" >
+        <di:waypoint x="1831" y="271" />
+        <di:waypoint x="1830" y="387" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_56-_57" >
+        <di:waypoint x="1832" y="164" />
+        <di:waypoint x="1831" y="271" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_55-_56" >
+        <di:waypoint x="1833" y="60" />
+        <di:waypoint x="1832" y="164" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_62-_63" >
+        <di:waypoint x="1669" y="42" />
+        <di:waypoint x="1672" y="123" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_24-_61" >
+        <di:waypoint x="1205" y="579" />
+        <di:waypoint x="1204" y="669" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_69-_68" >
+        <di:waypoint x="325" y="330" />
+        <di:waypoint x="97" y="332" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_73-_69" >
+        <di:waypoint x="335" y="265" />
+        <di:waypoint x="325" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_27-_70" >
+        <di:waypoint x="118" y="478" />
+        <di:waypoint x="323" y="508" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_71-_70" >
+        <di:waypoint x="461" y="406" />
+        <di:waypoint x="323" y="508" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_72-_70" >
+        <di:waypoint x="252" y="405" />
+        <di:waypoint x="323" y="508" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_69-_71" >
+        <di:waypoint x="325" y="330" />
+        <di:waypoint x="461" y="406" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_26-_66" >
+        <di:waypoint x="1312" y="785" />
+        <di:waypoint x="1068" y="1046" />
+        <di:waypoint x="907" y="1074" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_45-_66" >
+        <di:waypoint x="325" y="983" />
+        <di:waypoint x="323" y="1079" />
+        <di:waypoint x="907" y="1074" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_78-_66" >
+        <di:waypoint x="1683" y="384" />
+        <di:waypoint x="1699" y="1055" />
+        <di:waypoint x="907" y="1074" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_48-_67" >
+        <di:waypoint x="614" y="782" />
+        <di:waypoint x="618" y="859" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_77-_76" >
+        <di:waypoint x="1675" y="213" />
+        <di:waypoint x="1685" y="291" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_63-_77" >
+        <di:waypoint x="1672" y="123" />
+        <di:waypoint x="1675" y="213" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_77-_78" >
+        <di:waypoint x="1675" y="213" />
+        <di:waypoint x="1513" y="271" />
+        <di:waypoint x="1683" y="384" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_76-_78" >
+        <di:waypoint x="1685" y="291" />
+        <di:waypoint x="1683" y="384" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_43-_79" >
+        <di:waypoint x="562" y="112" />
+        <di:waypoint x="689" y="192" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_69-_72" >
+        <di:waypoint x="325" y="330" />
+        <di:waypoint x="252" y="405" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_84-_73" >
+        <di:waypoint x="491" y="206" />
+        <di:waypoint x="335" y="265" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_74-_75" >
+        <di:waypoint x="1048" y="71" />
+        <di:waypoint x="1039" y="171" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_67-_85" >
+        <di:waypoint x="618" y="859" />
+        <di:waypoint x="449" y="856" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_13-_84" >
+        <di:waypoint x="299" y="173" />
+        <di:waypoint x="491" y="206" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_80-_81" >
+        <di:waypoint x="731" y="364" />
+        <di:waypoint x="735" y="462" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_82-_80" >
+        <di:waypoint x="576" y="302" />
+        <di:waypoint x="731" y="364" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_82-_83" >
+        <di:waypoint x="576" y="302" />
+        <di:waypoint x="575" y="459" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="_51-_82" >
+        <di:waypoint x="707" y="274" />
+        <di:waypoint x="576" y="302" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>
