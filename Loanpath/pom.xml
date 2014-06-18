@@ -2,15 +2,84 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.thirdpillar.codify.loanpath</groupId>
-  <artifactId>LoanpathRules</artifactId>
+  <groupId>com.thirdpillar.loanpath</groupId>
+  <artifactId>loanpath-kie-rules</artifactId>
   <version>1.0.0</version>
-  <name>Loanpath Rules</name>
+  <name>Loanpath KIE Rules</name>
+	<properties>
+		<codify.version>1.1-SNAPSHOT</codify.version>
+		<loanpath.version>5.1-SNAPSHOT</loanpath.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>com.thirdpillar.codify</groupId>
+			<artifactId>codify-service</artifactId>
+			<version>${codify.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.thirdpillar.codify</groupId>
+			<artifactId>codify-service</artifactId>
+			<version>${codify.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>		
+        <dependency>
+            <groupId>com.thirdpillar.loanpath</groupId>
+            <artifactId>loanpath-piedmont-service</artifactId>
+            <version>${loanpath.version}</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>        		
+	</dependencies>
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>rule.properties</include>
+				</includes>
+				<filtering>true</filtering>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<excludes>
+					<exclude>rule.properties</exclude>
+				</excludes>
+				<filtering>false</filtering>
+			</resource>
+		</resources>
+		<plugins>
+	            <plugin>
+	                <groupId>org.apache.maven.plugins</groupId>
+	                <artifactId>maven-surefire-plugin</artifactId>
+	                <configuration>
+	                    <testFailureIgnore>false</testFailureIgnore>
+	                </configuration>
+	            </plugin>	
+		</plugins>
+	</build>
   <repositories>
     <repository>
       <id>guvnor-m2-repo</id>
       <name>Guvnor M2 Repo</name>
       <url>http://localhost:8080/jbpm-console/maven2/</url>
     </repository>
+<!--       <repository> -->
+<!--         <id>internal</id> -->
+<!--         <name>Third Pillar Internal Repository</name> -->
+<!--         <url>http://subversion.thirdpillar.com:8081/artifactory/thirdpillar</url> -->
+<!--         <snapshots> -->
+<!--           <enabled>true</enabled>          -->
+<!--         </snapshots> -->
+<!--       </repository> -->
+<!--       <repository> -->
+<!--         <id>central</id> -->
+<!--         <name>ibiblio</name> -->
+<!--         <url>http://subversion.thirdpillar.com:8081/artifactory/repo1-cache</url> -->
+<!--         <snapshots> -->
+<!--           <enabled>false</enabled> -->
+<!--         </snapshots> -->
+<!--       </repository> -->
   </repositories>
 </project>
